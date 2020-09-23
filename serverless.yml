@@ -20,13 +20,76 @@ provider:
   # the following line. Also, make sure to not
   # commit your .env.
   #
-  #environment:
-  #  SAMPLE_ENV_VAR: ${env:SAMPLE_ENV_VAR}
+  environment:
+    TABLE_NAME: notes
+    STRIPE_SECRET_KEY: ${env:STRIPE_SECRET_KEY}
+
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:DescribeTable
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:us-east-1:*:*"
+
+resources:
+  - ${file(resources/api-gateway-errors.yml)}
 
 functions:
-  hello:
-    handler: handler.hello
+  create:
+    handler: functions/create.main
     events:
       - http:
-          path: hello
+          path: notes
+          method: post
+          cors: true
+          authorizer: aws_iam
+
+  get:
+    handler: functions/get.main
+    events:
+      - http:
+          path: notes/{id}
           method: get
+          cors: true
+          authorizer: aws_iam
+
+  list:
+    handler: functions/list.main
+    events:
+      - http:
+          path: notes
+          method: get
+          cors: true
+          authorizer: aws_iam
+
+  update:
+    handler: functions/update.main
+    events:
+      - http:
+          path: notes/{id}
+          method: put
+          cors: true
+          authorizer: aws_iam
+
+  delete:
+    handler: functions/delete.main
+    events:
+      - http:
+          path: notes/{id}
+          method: delete
+          cors: true
+          authorizer: aws_iam
+
+  billing:
+    handler: functions/billing.main
+    events:
+      - http:
+          path: billing
+          method: post
+          cors: true
+          authorizer: aws_iam
